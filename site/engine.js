@@ -1,4 +1,5 @@
 export const OPEN=9*60, CLOSE=21*60+30, STEP=30;
+export const DEFAULT_BOXES=[10,19,14,11,12,13,15,16,17,18];
 export const STATES=['fuera','otra','caja','descanso','duda'];
 export const LABELS={fuera:'Sin asignación',otra:'Otra tarea',caja:'Caja',descanso:'Descanso',duda:'Revisar'};
 export const slots=Array.from({length:(CLOSE-OPEN)/STEP},(_,i)=>OPEN+i*STEP);
@@ -77,7 +78,7 @@ export function extractRows(photo,lines,img){
   return found;
 }
 export function totalMinutes(p){return p.states.filter(s=>s==='caja').length*STEP;}
-export function buildSchedule(people,boxes=[10,18,14,11,12,13,15,16,17],firstId='',demand=null){
+export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null){
   const ranked=[...people].sort((a,b)=>(a.id===firstId?-1:b.id===firstId?1:0)||(a.priority||0)-(b.priority||0)||totalMinutes(b)-totalMinutes(a)||a.name.localeCompare(b.name,'es'));
   let previous=new Map();const blocks=[],issues=[];
   for(let i=0;i<slots.length;i++){
@@ -106,4 +107,10 @@ export function validateProject(p){
   if(p.store!==undefined&&(typeof p.store!=='string'||p.store.length>100))throw new Error('El nombre de tienda no es válido.');
   if(p.date!==undefined&&(typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)))throw new Error('La fecha no es válida.');
   if(p.demand&&(!Array.isArray(p.demand)||p.demand.length!==slots.length||p.demand.some(v=>v!==null&&(!Number.isInteger(v)||v<0||v>40))))throw new Error('La necesidad del MOT no es válida.');return p;
+}
+export function upgradeProject(p){
+  validateProject(p);
+  const legacy='10,18,14,11,12,13,15,16,17';
+  if(p.rulesVersion!==2&&p.date>='2026-10-16'&&p.boxes.join(',')===legacy)return {...p,boxes:[...DEFAULT_BOXES],rulesVersion:2};
+  return {...p,rulesVersion:2};
 }

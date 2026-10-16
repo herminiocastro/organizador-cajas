@@ -24,7 +24,7 @@ El texto completo y los colores NO equivalen a una interpretación semántica de
 
 El lector detecta filas con etiqueta de empleado A/B y posibles tramos grises; no conoce por sí solo la elegibilidad de todas las secciones. Eliminar cualquier falso positivo y añadir las omisiones es parte de esta prueba. No se añaden apoyos ni reservas a la hoja.
 
-Las cajas adicionales a 10, 18 y 14 son configurables y deben verificarse para la tienda. Las asignaciones escritas a mano en ejemplos anteriores no se consideran reglas permanentes. Esta versión no aprende automáticamente de correcciones entre distintos usuarios.
+Las cajas adicionales a 10, 19 y 14 son configurables y deben verificarse para la tienda. Las asignaciones escritas a mano en ejemplos anteriores no se consideran reglas permanentes. Esta versión no aprende automáticamente de correcciones entre distintos usuarios.
 
 ## Cómo probar en el ordenador
 
@@ -65,3 +65,7 @@ Tesseract.js 7.0.0, tesseract.js-core 7.0.0 y datos `eng.traineddata` de la inst
 ## Primera prueba recomendada
 
 Usar un día ya resuelto, revisar los nombres, comprobar cada media hora y cada descanso, comparar la hoja con la de la coordinadora y anotar las diferencias. No usar la salida automática sin revisión para dirigir el trabajo.
+
+## Cambio de cajas principales · 16/10/2026
+
+Las cajas principales son 10 (primera) y 19 (segunda); 14 mantiene la tercera prioridad y 18 pasa al grupo de cajas adicionales. La configuración es editable por proyecto/día. Las sesiones del 16/10/2026 o posteriores que conservan exactamente la configuración predeterminada antigua se actualizan una vez; los días anteriores y las configuraciones personalizadas se conservan.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {slots,OPEN,CLOSE,clock,classify,buildSchedule,validateProject,totalMinutes} from '../site/engine.js';
+import {slots,OPEN,CLOSE,clock,classify,buildSchedule,validateProject,totalMinutes,upgradeProject,DEFAULT_BOXES} from '../site/engine.js';
 function person(id,active=[],rest=[]){return {id,name:`Persona ${id}`,states:slots.map((_,i)=>active.includes(i)?'caja':rest.includes(i)?'descanso':'fuera'),box:'',reviewed:true};}
 test('covers exactly 09:00 to 21:30 in 25 half-hour slots',()=>{assert.equal(slots.length,25);assert.equal(slots[0],540);assert.equal(slots.at(-1)+30,CLOSE);assert.equal(clock(OPEN),'09:00');});
 test('rank by real cash minutes and honor first cashier, never add support names',()=>{
@@ -20,8 +20,8 @@ test('cashiers return to priority boxes after the morning shift ends',()=>{
  const morning=person('M',[0,1]),afternoonA=person('T1',[1,2,3,4]),afternoonB=person('T2',[1,2,3,4]);
  const r=buildSchedule([morning,afternoonA,afternoonB],undefined,'M');
  const overlap=r.blocks.find(b=>b.start===570),after=r.blocks.find(b=>b.start===600);
- assert.deepEqual(overlap.members.map(p=>p.box),[10,18,14]);
- assert.deepEqual(after.members.map(p=>p.box),[10,18]);
+ assert.deepEqual(overlap.members.map(p=>p.box),[10,19,14]);
+ assert.deepEqual(after.members.map(p=>p.box),[10,19]);
 });
 test('detect duplicate fixed boxes and demand mismatches instead of inventing staff',()=>{
  const a=person('A',[0]),b=person('B',[0]);a.box=10;b.box=10;const demand=slots.map(()=>null);demand[0]=3;
@@ -29,4 +29,13 @@ test('detect duplicate fixed boxes and demand mismatches instead of inventing st
 });
 test('uncertain image cells are not silently treated as cashier assignments',()=>{const a=person('A');a.states[0]='duda';const r=buildSchedule([a]);assert.equal(r.blocks[0].members.length,0);assert.deepEqual(r.blocks[0].uncertain,['Persona A']);assert.equal(r.issues.length,1);});
 test('white paper, grey blocks and coloured work have distinct states',()=>{assert.equal(classify({l:230,c:4}),'fuera');assert.equal(classify({l:110,c:10}),'caja');assert.equal(classify({l:140,c:65}),'otra');assert.equal(classify({l:201,c:15}),'duda');});
-test('reject malformed imports and bad slot counts',()=>{assert.throws(()=>validateProject({schema:1,people:[{name:'x',states:[]}],boxes:[10]}));assert.throws(()=>validateProject({schema:1,people:[],boxes:[-2]}));assert.doesNotThrow(()=>validateProject({schema:1,people:[person('A')],boxes:[10,18,14]}));});
+test('reject malformed imports and bad slot counts',()=>{assert.throws(()=>validateProject({schema:1,people:[{name:'x',states:[]}],boxes:[10]}));assert.throws(()=>validateProject({schema:1,people:[],boxes:[-2]}));assert.doesNotThrow(()=>validateProject({schema:1,people:[person('A')],boxes:[10,19,14]}));});
+
+test('upgrades current default boxes to 10 and 19, preserves older days and custom priorities',()=>{
+ const legacy=[10,18,14,11,12,13,15,16,17];
+ const p={schema:1,date:'2026-10-16',people:[],boxes:legacy};
+ assert.deepEqual(upgradeProject(p).boxes,DEFAULT_BOXES);
+ assert.deepEqual(upgradeProject({...p,date:'2026-10-13'}).boxes,legacy);
+ assert.deepEqual(upgradeProject({...p,boxes:[10,18,15]}).boxes,[10,18,15]);
+ assert.deepEqual(upgradeProject({...p,rulesVersion:2}).boxes,legacy);
+});
