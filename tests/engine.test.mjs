@@ -39,3 +39,33 @@ test('upgrades current default boxes to 10 and 19, preserves older days and cust
  assert.deepEqual(upgradeProject({...p,boxes:[10,18,15]}).boxes,[10,18,15]);
  assert.deepEqual(upgradeProject({...p,rulesVersion:2}).boxes,legacy);
 });
+
+test('shift ranking counts only cashier time within chosen hours and clips output',()=>{
+ const a=person('A',[0,1,2,3,4,5,6,7,8,9,10,11]),b=person('B',[10,11,12,13]);
+ const r=buildSchedule([a,b],undefined,'',null,{start:840,end:960});
+ assert.equal(r.blocks[0].start,840);assert.equal(r.blocks.at(-1).end,960);
+ assert.equal(r.blocks[0].members[0].id,'B');assert.equal(r.blocks[0].members[0].box,10);
+ assert.equal(r.blocks.flatMap(b=>b.breaks).length,0);
+});
+test('temporary principal, fixed box and swap apply only within their interval',()=>{
+ const a=person('A',[0,1,2]),b=person('B',[0,1,2]),c=person('C',[0,1,2]);
+ for(const adjustment of [{kind:'first',personId:'B'},{kind:'box',personId:'B',box:18},{kind:'swap',personId:'A',otherId:'B'}]){
+  const base=buildSchedule([a,b,c],undefined,'',null,{start:540,end:630});
+  const r=buildSchedule([a,b,c],undefined,'',null,{start:540,end:630,adjustments:[{...adjustment,start:570,end:600}]});
+  assert.deepEqual(r.blocks[0].members,base.blocks[0].members);assert.deepEqual(r.blocks.at(-1).members,base.blocks[0].members);
+  const mid=r.blocks.find(b=>b.start===570);assert.equal(new Set(mid.members.map(p=>p.box)).size,3);
+  if(adjustment.kind==='first')assert.equal(mid.members[0].id,'B');
+  if(adjustment.kind==='box')assert.equal(mid.members.find(p=>p.id==='B').box,18);
+  if(adjustment.kind==='swap')assert.equal(mid.members.find(p=>p.id==='B').box,10);
+ }
+});
+test('exceptions never create a cashier during another task or a break',()=>{
+ const a=person('A',[0],[1]);const r=buildSchedule([a],undefined,'',null,{start:570,end:600,adjustments:[{kind:'box',personId:'A',box:10,start:570,end:600}]});
+ assert.equal(r.blocks[0].members.length,0);assert.equal(r.blocks[0].breaks[0].id,'A');assert.ok(r.issues.length);
+});
+test('imports validate shifts and exceptions; older projects remain readable',()=>{
+ const p={schema:1,people:[person('A',[0])],boxes:[10,19]};assert.doesNotThrow(()=>validateProject(p));
+ assert.throws(()=>validateProject({...p,shift:'night'}));assert.throws(()=>validateProject({...p,shiftStart:541,shiftEnd:600}));
+ assert.throws(()=>validateProject({...p,adjustments:[{kind:'box',personId:'missing',box:10,start:540,end:600}]}));
+ assert.doesNotThrow(()=>validateProject({...p,shift:'afternoon',shiftStart:840,shiftEnd:1290,adjustments:[]}));
+});

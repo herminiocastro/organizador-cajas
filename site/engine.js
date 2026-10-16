@@ -77,13 +77,21 @@ export function extractRows(photo,lines,img){
   }
   return found;
 }
-export function totalMinutes(p){return p.states.filter(s=>s==='caja').length*STEP;}
+export const SHIFT_PRESETS={morning:{label:'Mañana',start:540,end:870},afternoon:{label:'Tarde',start:840,end:1290},day:{label:'Día completo',start:540,end:1290}};
+export function shiftRange(project){const preset=SHIFT_PRESETS[project.shift]||SHIFT_PRESETS.day;return {label:preset.label,start:project.shiftStart??preset.start,end:project.shiftEnd??preset.end};}
+export function totalMinutes(p,start=OPEN,end=CLOSE){return p.states.reduce((n,s,i)=>n+(s==='caja'&&slots[i]>=start&&slots[i]<end?STEP:0),0);}
+export function rankPeople(people,firstId='',start=OPEN,end=CLOSE){return [...people].sort((a,b)=>(a.id===firstId?-1:b.id===firstId?1:0)||(a.priority||0)-(b.priority||0)||totalMinutes(b,start,end)-totalMinutes(a,start,end)||a.name.localeCompare(b.name,'es'));}
+export function personRanges(p,state,start=OPEN,end=CLOSE){const ranges=[];for(let i=0;i<slots.length;i++){const t=slots[i];if(t<start||t>=end||p.states[i]!==state)continue;const last=ranges.at(-1);if(last&&last.end===t)last.end=t+STEP;else ranges.push({start:t,end:t+STEP});}return ranges;}
+
 export function halfHourBlocks(blocks){return blocks.flatMap(b=>{const rows=[];for(let start=b.start;start<b.end;start+=STEP)rows.push({...b,start,end:Math.min(start+STEP,b.end)});return rows;});}
-export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null){
-  const ranked=[...people].sort((a,b)=>(a.id===firstId?-1:b.id===firstId?1:0)||(a.priority||0)-(b.priority||0)||totalMinutes(b)-totalMinutes(a)||a.name.localeCompare(b.name,'es'));
+export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null,options={}){
+  const {start=OPEN,end=CLOSE,adjustments=[]}=options;
+  const ranked=rankPeople(people,firstId,start,end);
   let previous=new Map();const blocks=[],issues=[];
   for(let i=0;i<slots.length;i++){
+    if(slots[i]<start||slots[i]>=end)continue;
     const active=ranked.filter(p=>p.states[i]==='caja'),rest=ranked.filter(p=>p.states[i]==='descanso'),uncertain=ranked.filter(p=>p.states[i]==='duda');
+    const applicable=adjustments.filter(a=>slots[i]>=a.start&&slots[i]<a.end);
     const assigned=new Map(),used=new Set();
     for(const p of active){if(p.box){const box=Number(p.box);if(used.has(box))issues.push({i,text:`Caja ${box} duplicada en ${clock(slots[i])}.`});else{assigned.set(p.id,box);used.add(box);}}}
     const pool=boxes.filter(b=>!used.has(b)).slice(0,active.length-assigned.size);
@@ -91,20 +99,31 @@ export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null)
     if(first&&!assigned.has(first.id)&&pool.length){assigned.set(first.id,pool[0]);used.add(pool[0]);}
     for(const p of active){if(assigned.has(p.id))continue;const old=previous.get(p.id);if(old&&pool.includes(old)&&!used.has(old)){assigned.set(p.id,old);used.add(old);}}
     for(const p of active){if(assigned.has(p.id))continue;const box=pool.find(b=>!used.has(b));if(box){assigned.set(p.id,box);used.add(box);}else issues.push({i,text:`Faltan números de caja en ${clock(slots[i])}.`});}
+    // Keep continuity from the MOT assignment, so a temporary exception cannot leak past its end.
+    previous=new Map(assigned);
+    for(const a of applicable){
+      if(!assigned.has(a.personId)||(a.kind==='swap'&&!assigned.has(a.otherId))){issues.push({i,text:`Cambio sin cajero disponible a las ${clock(slots[i])}.`});continue;}
+      if(a.kind==='swap'){const old=assigned.get(a.personId);assigned.set(a.personId,assigned.get(a.otherId));assigned.set(a.otherId,old);continue;}
+      const target=a.kind==='first'?boxes[0]:a.box,old=assigned.get(a.personId),occupant=active.find(p=>p.id!==a.personId&&assigned.get(p.id)===target);
+      assigned.set(a.personId,target);if(occupant)assigned.set(occupant.id,old);
+      if(a.kind==='first'){const j=active.findIndex(p=>p.id===a.personId);active.unshift(...active.splice(j,1));}
+    }
     for(const p of uncertain)issues.push({i,text:`Revisar casilla de ${p.name} a las ${clock(slots[i])}.`});
     if(demand&&demand[i]!==null&&demand[i]!==''&&Number(demand[i])!==active.length)issues.push({i,text:`${clock(slots[i])}: ${active.length} asignados y ${demand[i]} indicados en el MOT.`});
     const members=active.map(p=>({id:p.id,name:p.name,box:assigned.get(p.id)??null}));
     const breaks=rest.map(p=>({id:p.id,name:p.name,kind:['HD','HM'].includes(p.breakKind)?p.breakKind:(slots[i]<900?'HD':'HM')}));
     const signature=JSON.stringify([members,breaks,uncertain.map(p=>p.id)]),last=blocks.at(-1);
     if(last&&last.signature===signature)last.end=slots[i]+STEP;else blocks.push({start:slots[i],end:slots[i]+STEP,members,breaks,uncertain:uncertain.map(p=>p.name),signature});
-    previous=assigned;
   }
-  return {blocks,issues};
+  return {blocks,issues,start,end};
 }
 export function validateProject(p){
   if(!p||p.schema!==1||!Array.isArray(p.people)||p.people.length>150)throw new Error('Este archivo no es un proyecto válido de Organizador de cajas.');
-  const ids=new Set();for(const a of p.people){if(typeof a.id!=='string'||a.id.length>100||ids.has(a.id)||typeof a.name!=='string'||a.name.length>150||!Array.isArray(a.states)||a.states.length!==slots.length||a.states.some(s=>!STATES.includes(s))||(a.box!==''&&a.box!==undefined&&(!Number.isInteger(a.box)||a.box<1||a.box>99))||(a.breakKind&&!['HD','HM'].includes(a.breakKind)))throw new Error('El archivo contiene horarios no válidos.');ids.add(a.id);}
+  const ids=new Set();for(const a of p.people){if(typeof a.id!=='string'||a.id.length>100||ids.has(a.id)||typeof a.name!=='string'||a.name.length>150||!Array.isArray(a.states)||a.states.length!==slots.length||a.states.some(s=>!STATES.includes(s))||(a.box!==''&&a.box!==undefined&&(!Number.isInteger(a.box)||a.box<1||a.box>99))||(a.reviewedRanges!==undefined&&(!Array.isArray(a.reviewedRanges)||a.reviewedRanges.length>100||a.reviewedRanges.some(k=>typeof k!=='string'||!/^\d{3,4}-\d{3,4}$/.test(k))))||(a.breakKind&&!['HD','HM'].includes(a.breakKind)))throw new Error('El archivo contiene horarios no válidos.');ids.add(a.id);}
   if(!Array.isArray(p.boxes)||!p.boxes.length||new Set(p.boxes).size!==p.boxes.length||p.boxes.some(b=>!Number.isInteger(b)||b<1||b>99))throw new Error('Revisa los números de caja del archivo.');
+  if(p.shift!==undefined&&!Object.hasOwn(SHIFT_PRESETS,p.shift))throw new Error('Turno no válido.');
+  if((p.shiftStart!==undefined||p.shiftEnd!==undefined)&&(!Number.isInteger(p.shiftStart)||!Number.isInteger(p.shiftEnd)||p.shiftStart<OPEN||p.shiftEnd>CLOSE||p.shiftEnd<=p.shiftStart||p.shiftStart%STEP||p.shiftEnd%STEP))throw new Error('Horas del turno no válidas.');
+  if(p.adjustments!==undefined&&(!Array.isArray(p.adjustments)||p.adjustments.length>100||p.adjustments.some(a=>!['first','box','swap'].includes(a.kind)||!ids.has(a.personId)||!Number.isInteger(a.start)||!Number.isInteger(a.end)||a.start<OPEN||a.end>CLOSE||a.start>=a.end||a.start%STEP||a.end%STEP||(a.kind==='box'&&(!Number.isInteger(a.box)||a.box<1||a.box>99))||(a.kind==='swap'&&(!ids.has(a.otherId)||a.otherId===a.personId)))))throw new Error('Cambios puntuales no válidos.');
   if(p.store!==undefined&&(typeof p.store!=='string'||p.store.length>100))throw new Error('El nombre de tienda no es válido.');
   if(p.date!==undefined&&(typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)))throw new Error('La fecha no es válida.');
   if(p.demand&&(!Array.isArray(p.demand)||p.demand.length!==slots.length||p.demand.some(v=>v!==null&&(!Number.isInteger(v)||v<0||v>40))))throw new Error('La necesidad del MOT no es válida.');return p;

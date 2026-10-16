@@ -1,4 +1,4 @@
-# Organizador de cajas · MVP 0.1
+# Organizador de cajas · MVP 0.2
 
 Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web estática, instalable y gratuita. No utiliza una API generativa, cuentas ni servidor de pago. El OCR y el análisis de píxeles se ejecutan localmente.
 
@@ -6,11 +6,13 @@ Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web 
 
 - Dos fotos: parte delantera y trasera del MOT.
 - OCR local de nombres y marcas AM; propuesta de tramos a partir de casillas grises.
-- Revisión individual junto a la fila de origen; edición por medias horas o por rangos.
+- Resumen legible del turno, con horas de caja y descansos. Corrección opcional por rangos, sin casillas para pintar.
 - Añadir personas omitidas y eliminar falsos positivos.
 - Orden por horas asignadas a caja y selección del primer cajero.
 - Cajas configurables, caja fija opcional y continuidad de asignación cuando es posible.
-- Horario 09:00–21:30, HD/HM y 25 tramos de media hora.
+- Selección de mañana (09:00–14:30), tarde (14:00–21:30) o día completo; horas ajustables de media en media.
+- Prioridad por horas reales de caja dentro del turno seleccionado.
+- Cambios puntuales de primer cajero, caja o intercambio, acotados por horas y sin añadir personal fuera de caja.
 - Comprobación opcional de necesidad MOT, sin completar déficits con personas inventadas.
 - Descarga directa de PDF, impresión, copiar texto y guardar/abrir proyectos.
 - Ejemplo con personas ficticias e informe de prueba sin nombres ni fotos.
@@ -53,7 +55,7 @@ No hay analítica ni peticiones a una API de lectura. Fotos solo en memoria de l
 
 ## Verificación
 
-- `npm test` ejecuta las pruebas del motor puro (sin instalar dependencias).
+- `npm ci --ignore-scripts` y `npm test` ejecutan las pruebas del motor y del PDF.
 - Se ha comprobado sintaxis de JavaScript y las referencias de archivos locales.
 - El lector se ha ejecutado con Tesseract.js 7 y el motor de píxeles en Node sobre dos fotografías reales. Estas fotos no están en el paquete.
 - El editor visual y la instalación en Safari/iPhone y Chrome/Android requieren prueba interactiva en los dispositivos de destino. No se han verificado todavía en un navegador real en esta sesión.
@@ -72,4 +74,14 @@ Las cajas principales son 10 (primera) y 19 (segunda); 14 mantiene la tercera pr
 
 ## Interfaz simplificada · 16/10/2026
 
-La pantalla inicial muestra las dos fotos y la fecha, sin presentación superior ni campo de tienda. El botón Descargar PDF genera el archivo localmente con los 25 tramos de media hora y la columna HD/HM a la derecha.
+La pantalla inicial muestra las dos fotos y la fecha, sin presentación superior ni campo de tienda. El botón Descargar PDF genera el archivo localmente con los tramos de media hora del turno y los descansos a la derecha.
+
+## Formato de referencia y flujo · 16/10/2026
+
+La hoja de referencia se traslada a A4 con dos columnas de lectura: arriba a abajo en la izquierda y luego en la derecha. Cada bloque muestra la media hora, el número de cajeros rodeado, los nombres uno por línea con su caja y los descansos a la derecha. Los bloques nunca se parten entre columnas. Si los nombres completos o la carga del turno requieren más espacio, el PDF continúa en otra página. Se repite cada media hora para que la hoja no dependa de signos como «+» o de recordar el bloque anterior.
+
+El turno de tarde predeterminado comienza a las 14:00, como en la referencia aportada. La mañana se propone de 09:00 a 14:30, ajustable; no se considera una regla de plantilla confirmada. La selección de turno filtra la hoja y recalcula la prioridad sin volver a analizar las fotos. Las fotos y las notas manuscritas de referencia no se publican. Las anotaciones en recuadros no tienen una interpretación automática asumida.
+
+El paso 2 muestra un resumen; la edición avanzada queda cerrada bajo «Corregir un dato leído». Una comprobación del resumen confirma solo ese intervalo de horas. Cambiar las horas no confirma automáticamente otro turno. Los cambios puntuales del paso 3 no se interpretan como lenguaje libre: son controles explícitos que validan la disponibilidad. Una excepción caduca al terminar su intervalo.
+
+La mejora de interfaz y formato no resuelve la precisión del OCR: la prueba sobre la foto delantera del 16/10 todavía omite filas y desplaza algunos tramos. No se considera validada una transcripción automática de extremo a extremo.
