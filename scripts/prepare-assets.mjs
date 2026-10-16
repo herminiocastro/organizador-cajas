@@ -22,3 +22,7 @@ if(!bytes||createHash('sha256').update(bytes).digest('hex')!==expected){
  await fs.writeFile(file,bytes);
 }
 console.log('Lector OCR y datos de idioma preparados y verificados.');
+
+const pdf=path.dirname(require.resolve('pdf-lib/package.json'));
+await fs.copyFile(path.join(pdf,'dist/pdf-lib.min.js'),path.join(dest,'pdf-lib.min.js'));
+await fs.copyFile(path.join(pdf,'LICENSE.md'),path.join(dest,'pdf-lib-LICENSE.txt'));

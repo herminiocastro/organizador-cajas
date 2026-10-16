@@ -10,9 +10,9 @@ Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web 
 - Añadir personas omitidas y eliminar falsos positivos.
 - Orden por horas asignadas a caja y selección del primer cajero.
 - Cajas configurables, caja fija opcional y continuidad de asignación cuando es posible.
-- Horario 09:00–21:30, HD/HM y bloques solo cuando hay cambios.
+- Horario 09:00–21:30, HD/HM y 25 tramos de media hora.
 - Comprobación opcional de necesidad MOT, sin completar déficits con personas inventadas.
-- Hoja imprimible (guardar como PDF desde el navegador), copiar texto y guardar/abrir proyectos.
+- Descarga directa de PDF, impresión, copiar texto y guardar/abrir proyectos.
 - Ejemplo con personas ficticias e informe de prueba sin nombres ni fotos.
 - Recuperación de la sesión local e instalación en la pantalla de inicio.
 
@@ -69,3 +69,7 @@ Usar un día ya resuelto, revisar los nombres, comprobar cada media hora y cada 
 ## Cambio de cajas principales · 16/10/2026
 
 Las cajas principales son 10 (primera) y 19 (segunda); 14 mantiene la tercera prioridad y 18 pasa al grupo de cajas adicionales. La configuración es editable por proyecto/día. Las sesiones del 16/10/2026 o posteriores que conservan exactamente la configuración predeterminada antigua se actualizan una vez; los días anteriores y las configuraciones personalizadas se conservan.
+
+## Interfaz simplificada · 16/10/2026
+
+La pantalla inicial muestra las dos fotos y la fecha, sin presentación superior ni campo de tienda. El botón Descargar PDF genera el archivo localmente con los 25 tramos de media hora y la columna HD/HM a la derecha.

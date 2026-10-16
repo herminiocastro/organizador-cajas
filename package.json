@@ -1,1 +1,1 @@
-{"name":"organizador-cajas","version":"0.1.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","prepare-assets":"node scripts/prepare-assets.mjs"},"dependencies":{"tesseract.js":"7.0.0","tesseract.js-core":"7.0.0"}}
+{"name":"organizador-cajas","version":"0.1.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","prepare-assets":"node scripts/prepare-assets.mjs"},"dependencies":{"pdf-lib":"1.17.1","tesseract.js":"7.0.0","tesseract.js-core":"7.0.0"}}

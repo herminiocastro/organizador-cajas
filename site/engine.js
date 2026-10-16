@@ -78,6 +78,7 @@ export function extractRows(photo,lines,img){
   return found;
 }
 export function totalMinutes(p){return p.states.filter(s=>s==='caja').length*STEP;}
+export function halfHourBlocks(blocks){return blocks.flatMap(b=>{const rows=[];for(let start=b.start;start<b.end;start+=STEP)rows.push({...b,start,end:Math.min(start+STEP,b.end)});return rows;});}
 export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null){
   const ranked=[...people].sort((a,b)=>(a.id===firstId?-1:b.id===firstId?1:0)||(a.priority||0)-(b.priority||0)||totalMinutes(b)-totalMinutes(a)||a.name.localeCompare(b.name,'es'));
   let previous=new Map();const blocks=[],issues=[];

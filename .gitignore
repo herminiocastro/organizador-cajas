@@ -12,3 +12,5 @@ site/vendor/*.wasm.js
 site/vendor/tesseract.min.js
 site/vendor/worker.min.js
 site/vendor/eng.traineddata
+
+site/vendor/pdf-lib.min.js
