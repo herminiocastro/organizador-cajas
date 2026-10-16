@@ -84,8 +84,11 @@ export function buildSchedule(people,boxes=[10,18,14,11,12,13,15,16,17],firstId=
     const active=ranked.filter(p=>p.states[i]==='caja'),rest=ranked.filter(p=>p.states[i]==='descanso'),uncertain=ranked.filter(p=>p.states[i]==='duda');
     const assigned=new Map(),used=new Set();
     for(const p of active){if(p.box){const box=Number(p.box);if(used.has(box))issues.push({i,text:`Caja ${box} duplicada en ${clock(slots[i])}.`});else{assigned.set(p.id,box);used.add(box);}}}
-    for(const p of active){if(assigned.has(p.id))continue;const old=previous.get(p.id);if(old&&!used.has(old)){assigned.set(p.id,old);used.add(old);}}
-    for(const p of active){if(assigned.has(p.id))continue;const box=boxes.find(b=>!used.has(b));if(box){assigned.set(p.id,box);used.add(box);}else issues.push({i,text:`Faltan números de caja en ${clock(slots[i])}.`});}
+    const pool=boxes.filter(b=>!used.has(b)).slice(0,active.length-assigned.size);
+    const first=active[0];
+    if(first&&!assigned.has(first.id)&&pool.length){assigned.set(first.id,pool[0]);used.add(pool[0]);}
+    for(const p of active){if(assigned.has(p.id))continue;const old=previous.get(p.id);if(old&&pool.includes(old)&&!used.has(old)){assigned.set(p.id,old);used.add(old);}}
+    for(const p of active){if(assigned.has(p.id))continue;const box=pool.find(b=>!used.has(b));if(box){assigned.set(p.id,box);used.add(box);}else issues.push({i,text:`Faltan números de caja en ${clock(slots[i])}.`});}
     for(const p of uncertain)issues.push({i,text:`Revisar casilla de ${p.name} a las ${clock(slots[i])}.`});
     if(demand&&demand[i]!==null&&demand[i]!==''&&Number(demand[i])!==active.length)issues.push({i,text:`${clock(slots[i])}: ${active.length} asignados y ${demand[i]} indicados en el MOT.`});
     const members=active.map(p=>({id:p.id,name:p.name,box:assigned.get(p.id)??null}));

@@ -16,6 +16,13 @@ test('breaks exclude a cashier and keep existing cashier boxes across relief',()
 test('only merges blocks when both cashier assignments and breaks match',()=>{
  const a=person('A',[0,1,2],[3]),r=buildSchedule([a]);assert.equal(r.blocks[0].start,540);assert.equal(r.blocks[0].end,630);assert.equal(r.blocks[1].breaks.length,1);assert.equal(r.blocks[1].end,660);
 });
+test('cashiers return to priority boxes after the morning shift ends',()=>{
+ const morning=person('M',[0,1]),afternoonA=person('T1',[1,2,3,4]),afternoonB=person('T2',[1,2,3,4]);
+ const r=buildSchedule([morning,afternoonA,afternoonB],undefined,'M');
+ const overlap=r.blocks.find(b=>b.start===570),after=r.blocks.find(b=>b.start===600);
+ assert.deepEqual(overlap.members.map(p=>p.box),[10,18,14]);
+ assert.deepEqual(after.members.map(p=>p.box),[10,18]);
+});
 test('detect duplicate fixed boxes and demand mismatches instead of inventing staff',()=>{
  const a=person('A',[0]),b=person('B',[0]);a.box=10;b.box=10;const demand=slots.map(()=>null);demand[0]=3;
  const r=buildSchedule([a,b],undefined,'',demand);assert.ok(r.issues.some(x=>x.text.includes('duplicada')));assert.ok(r.issues.some(x=>x.text.includes('3 indicados')));assert.equal(r.blocks[0].members.length,2);
