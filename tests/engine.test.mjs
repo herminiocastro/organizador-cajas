@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {slots,OPEN,CLOSE,clock,classify,buildSchedule,validateProject,totalMinutes} from '../site/engine.js';
+function person(id,active=[],rest=[]){return {id,name:`Persona ${id}`,states:slots.map((_,i)=>active.includes(i)?'caja':rest.includes(i)?'descanso':'fuera'),box:'',reviewed:true};}
+test('covers exactly 09:00 to 21:30 in 25 half-hour slots',()=>{assert.equal(slots.length,25);assert.equal(slots[0],540);assert.equal(slots.at(-1)+30,CLOSE);assert.equal(clock(OPEN),'09:00');});
+test('rank by real cash minutes and honor first cashier, never add support names',()=>{
+ const a=person('A',[0,1]),b=person('B',[0,1,2]),c=person('C',[1]);
+ assert.equal(totalMinutes(b),90);let r=buildSchedule([a,b,c]);assert.deepEqual(r.blocks[0].members.map(p=>p.id),['B','A']);
+ r=buildSchedule([a,b,c],undefined,'A');assert.deepEqual(r.blocks[0].members.map(p=>p.id),['A','B']);assert.equal(r.blocks[0].members[0].box,10);
+});
+test('breaks exclude a cashier and keep existing cashier boxes across relief',()=>{
+ const a=person('A',[0,2],[1]),b=person('B',[0,1,2]);const r=buildSchedule([a,b]);
+ const initial=r.blocks[0],rest=r.blocks[1],last=r.blocks[2];assert.equal(rest.members.length,1);assert.equal(rest.breaks[0].id,'A');assert.equal(rest.breaks[0].kind,'HD');
+ assert.equal(rest.members[0].box,initial.members.find(p=>p.id==='B').box);assert.equal(last.members.find(p=>p.id==='B').box,initial.members.find(p=>p.id==='B').box);
+});
+test('only merges blocks when both cashier assignments and breaks match',()=>{
+ const a=person('A',[0,1,2],[3]),r=buildSchedule([a]);assert.equal(r.blocks[0].start,540);assert.equal(r.blocks[0].end,630);assert.equal(r.blocks[1].breaks.length,1);assert.equal(r.blocks[1].end,660);
+});
+test('detect duplicate fixed boxes and demand mismatches instead of inventing staff',()=>{
+ const a=person('A',[0]),b=person('B',[0]);a.box=10;b.box=10;const demand=slots.map(()=>null);demand[0]=3;
+ const r=buildSchedule([a,b],undefined,'',demand);assert.ok(r.issues.some(x=>x.text.includes('duplicada')));assert.ok(r.issues.some(x=>x.text.includes('3 indicados')));assert.equal(r.blocks[0].members.length,2);
+});
+test('uncertain image cells are not silently treated as cashier assignments',()=>{const a=person('A');a.states[0]='duda';const r=buildSchedule([a]);assert.equal(r.blocks[0].members.length,0);assert.deepEqual(r.blocks[0].uncertain,['Persona A']);assert.equal(r.issues.length,1);});
+test('white paper, grey blocks and coloured work have distinct states',()=>{assert.equal(classify({l:230,c:4}),'fuera');assert.equal(classify({l:110,c:10}),'caja');assert.equal(classify({l:140,c:65}),'otra');assert.equal(classify({l:201,c:15}),'duda');});
+test('reject malformed imports and bad slot counts',()=>{assert.throws(()=>validateProject({schema:1,people:[{name:'x',states:[]}],boxes:[10]}));assert.throws(()=>validateProject({schema:1,people:[],boxes:[-2]}));assert.doesNotThrow(()=>validateProject({schema:1,people:[person('A')],boxes:[10,18,14]}));});

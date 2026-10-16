@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+*.log
+*.tsv
+.env*
+private/
+test-results/
+playwright-report/
+eng.traineddata
+site/vendor/*.wasm
+site/vendor/*.wasm.js
+site/vendor/tesseract.min.js
+site/vendor/worker.min.js
+site/vendor/eng.traineddata
