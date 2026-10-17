@@ -1,4 +1,4 @@
-# Organizador de cajas · MVP 0.3
+# Organizador de cajas · MVP 0.3.3
 
 Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web estática, instalable y gratuita. No utiliza una API generativa, cuentas ni servidor de pago. El OCR y el análisis de píxeles se ejecutan localmente.
 
@@ -101,3 +101,11 @@ Los relevos que no estén pintados en el MOT no se pueden deducir automáticamen
 La prueba en la web detectó además que Tesseract.js 7 selecciona Relaxed SIMD en algunos navegadores. La preparación de recursos incluye todas las variantes LSTM WASM del paquete fijado, incluida Relaxed SIMD, y la caché las precarga. Un fallo de arranque se mantiene visible en el estado de lectura.
 
 La asignación automática reserva las dos primeras cajas prioritarias para los dos primeros cajeros activos del tramo, antes de intentar conservar cajas auxiliares. Esto corrige que el segundo prioritario mantuviera una caja secundaria al incorporarse o volver de su descanso. Las cajas fijadas expresamente conservan precedencia.
+
+## Comprobación de nombres · 17/10/2026
+
+El recorte individual amplía su margen izquierdo a partir del texto localizado, interpola los píxeles al ampliar y contrasta lecturas de línea en gris y binarizadas. Los desacuerdos ortográficos se muestran para comprobarlos: la confianza del OCR no garantiza un nombre correcto. Si falla la alineación de nombres, no se aplica una traslación arbitraria a todas las filas.
+
+Las correcciones de nombres se recuerdan solo en este navegador para una lectura idéntica (sin distinguir mayúsculas o acentos), sin elegir otra persona por semejanza. Borrar la sesión también borra estas correcciones. La nueva versión requiere volver a analizar las fotos; no transforma un proyecto antiguo sin sus imágenes.
+
+Se mantienen el motor de asignación y el formato PDF. La comparación con una hoja manuscrita puede revelar movimientos de sección y decisiones de prioridad que no están expresados en las casillas grises; no se incorporan como reglas generales a partir de un único día. Las fotos, nombres de las pruebas y resultados privados no se incluyen en el repositorio.
