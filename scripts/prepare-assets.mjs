@@ -8,7 +8,7 @@ const dest=path.join(root,'site/vendor');await fs.mkdir(dest,{recursive:true});
 const tess=path.dirname(require.resolve('tesseract.js/package.json'));
 const core=path.dirname(require.resolve('tesseract.js-core/package.json'));
 for(const f of ['tesseract.min.js','worker.min.js','tesseract.min.js.LICENSE.txt','worker.min.js.LICENSE.txt'])await fs.copyFile(path.join(tess,'dist',f),path.join(dest,f));
-for(const f of ['tesseract-core-lstm.wasm.js','tesseract-core-lstm.wasm','tesseract-core-simd-lstm.wasm.js','tesseract-core-simd-lstm.wasm'])await fs.copyFile(path.join(core,f),path.join(dest,f));
+for(const f of (await fs.readdir(core)).filter(f=>/^tesseract-core.*-lstm\.wasm(\.js)?$/.test(f)))await fs.copyFile(path.join(core,f),path.join(dest,f));
 await fs.copyFile(path.join(tess,'LICENSE.md'),path.join(dest,'tesseract.js-LICENSE.txt'));
 await fs.copyFile(path.join(core,'LICENSE'),path.join(dest,'tesseract.js-core-LICENSE.txt'));
 for(const [lang,expected] of [['eng','7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2'],['spa','6f2e04d02774a18f01bed44b1111f2cd7f3ba7ac9dc4373cd3f898a40ea6b464']]){

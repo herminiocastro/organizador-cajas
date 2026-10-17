@@ -47,7 +47,7 @@ async function analyze(){if(busy||!photos.front||!photos.back)return;if(project.
     project.people=people;project.demo=false;project.firstId='';project.adjustments=[];selected=people[0]?.id;progress(`Lectura terminada: ${people.length} personas propuestas. Revisa cada fila.`,100);persist();
     if(!people.length)throw new Error('No se han podido detectar filas con suficiente claridad. Prueba fotos más nítidas o abre el ejemplo y añade los datos para ensayar el organizador.');
     step(2);toast('Lectura experimental terminada. Comprueba también si falta alguna persona.');
-  }catch(e){progress('Lectura no completada.',0);toast(e.message);if(worker){await worker.terminate().catch(()=>{});worker=null;}}
+  }catch(e){const message=e?.message||'No se ha podido iniciar el lector. Recarga la página y vuelve a analizar las fotos.';progress(`Lectura no completada. ${message}`,0);toast(message);if(worker){await worker.terminate().catch(()=>{});worker=null;}}
   finally{busy=false;$('analyze').disabled=!photos.front||!photos.back;$('demo').disabled=false;$('front').disabled=false;$('back').disabled=false;}
 }
 $('analyze').onclick=analyze;
