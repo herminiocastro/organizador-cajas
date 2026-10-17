@@ -1,4 +1,4 @@
-const CACHE='organizador-cajas-0.3.1';
+const CACHE='organizador-cajas-0.3.2';
 const BASE=new URL('./',self.location.href);
 const FILES=['./','index.html','styles.css','app.js','engine.js','mot-reader.js','pdf.js','manifest.webmanifest','icon.svg','icon-180.png','icon-192.png','icon-512.png','vendor/tesseract.min.js','vendor/pdf-lib.min.js','vendor/worker.min.js','vendor/eng.traineddata','vendor/spa.traineddata','vendor/tesseract-core-lstm.wasm.js','vendor/tesseract-core-lstm.wasm','vendor/tesseract-core-simd-lstm.wasm.js','vendor/tesseract-core-simd-lstm.wasm','vendor/tesseract-core-relaxedsimd-lstm.wasm.js','vendor/tesseract-core-relaxedsimd-lstm.wasm'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(new URL(f,BASE).href,{cache:'reload'})))).then(()=>self.skipWaiting())));

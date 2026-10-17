@@ -76,3 +76,9 @@ test('a section relief replaces one cashier, inherits the box, and expires witho
  assert.deepEqual(r.blocks[0].members.map(p=>p.id),['A','B']);assert.deepEqual(r.blocks[1].members.map(p=>p.id),['C','B']);assert.equal(r.blocks[1].members[0].box,10);assert.equal(r.blocks[1].members.length,2);assert.equal(r.blocks[1].breaks.length,0);assert.deepEqual(r.blocks[2].members.map(p=>p.id),['A','B']);
  cover.states[1]='descanso';const invalid=buildSchedule([a,b,cover],undefined,'A',null,{start:570,end:600,adjustments:[{kind:'relief',personId:'A',otherId:'C',start:570,end:600}]});assert.ok(invalid.issues.some(i=>i.text.includes('Relevo')));assert.equal(invalid.blocks[0].members[0].id,'A');
 });
+
+test('the second active priority reclaims box 19 instead of keeping an auxiliary box',()=>{
+ const a=person('A',[0,1,2,3,4]),b=person('B',[1,2,3],[0]),c=person('C',[0,1,2]);
+ const r=buildSchedule([a,b,c],undefined,'A');const start=r.blocks.find(b=>b.start===540),returning=r.blocks.find(b=>b.start===570);
+ assert.equal(start.members.find(p=>p.id==='C').box,19);assert.equal(returning.members.find(p=>p.id==='B').box,19);assert.equal(returning.members.find(p=>p.id==='A').box,10);assert.equal(new Set(returning.members.map(p=>p.box)).size,3);
+});

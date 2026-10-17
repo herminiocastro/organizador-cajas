@@ -94,8 +94,10 @@ El lector anterior dependía de coordenadas proporcionales fijas y de que el OCR
 
 Una lectura guardada con la versión anterior no se transforma ni se valida automáticamente: se pide volver a analizar las dos fotos. El PDF y su formato aprobado no se modifican.
 
-Verificación: 21 pruebas automáticas de motor, PDF y geometría; comparación privada de ambas caras del MOT de referencia y reconocimiento de geometría sobre otras tomas. En el ejemplo de tarde, el recuento recuperado coincide con 13 de los 15 tramos de la hoja manuscrita; siguen existiendo errores de escritura en algunos nombres y diferencias de personas/asignaciones. Coincidir en recuento NO valida toda la organización. No se han codificado nombres ni horarios del ejemplo en el producto ni en las pruebas públicas.
+Verificación: 22 pruebas automáticas de motor, PDF y geometría; comparación privada de ambas caras del MOT de referencia y reconocimiento de geometría sobre otras tomas. En el ejemplo de tarde, el recuento recuperado coincide con 13 de los 15 tramos de la hoja manuscrita; siguen existiendo errores de escritura en algunos nombres y diferencias de personas/asignaciones. Coincidir en recuento NO valida toda la organización. No se han codificado nombres ni horarios del ejemplo en el producto ni en las pruebas públicas.
 
 Los relevos que no estén pintados en el MOT no se pueden deducir automáticamente: el cambio puntual «Sustituir a quien sale a cubrir una sección» mantiene el número y la caja, retira al saliente sin marcarlo de descanso y exige que el sustituto esté en otra tarea, nunca de descanso ni fuera de turno. Al finalizar el intervalo, se recupera la asignación del MOT.
 
 La prueba en la web detectó además que Tesseract.js 7 selecciona Relaxed SIMD en algunos navegadores. La preparación de recursos incluye todas las variantes LSTM WASM del paquete fijado, incluida Relaxed SIMD, y la caché las precarga. Un fallo de arranque se mantiene visible en el estado de lectura.
+
+La asignación automática reserva las dos primeras cajas prioritarias para los dos primeros cajeros activos del tramo, antes de intentar conservar cajas auxiliares. Esto corrige que el segundo prioritario mantuviera una caja secundaria al incorporarse o volver de su descanso. Las cajas fijadas expresamente conservan precedencia.

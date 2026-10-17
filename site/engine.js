@@ -95,8 +95,8 @@ export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null,
     const assigned=new Map(),used=new Set();
     for(const p of active){if(p.box){const box=Number(p.box);if(used.has(box))issues.push({i,text:`Caja ${box} duplicada en ${clock(slots[i])}.`});else{assigned.set(p.id,box);used.add(box);}}}
     const pool=boxes.filter(b=>!used.has(b)).slice(0,active.length-assigned.size);
-    const first=active[0];
-    if(first&&!assigned.has(first.id)&&pool.length){assigned.set(first.id,pool[0]);used.add(pool[0]);}
+    // Both principal boxes take precedence over continuity in an auxiliary box.
+    for(const principal of active.slice(0,2)){if(assigned.has(principal.id))continue;const box=pool.find(b=>!used.has(b));if(box){assigned.set(principal.id,box);used.add(box);}}
     for(const p of active){if(assigned.has(p.id))continue;const old=previous.get(p.id);if(old&&pool.includes(old)&&!used.has(old)){assigned.set(p.id,old);used.add(old);}}
     for(const p of active){if(assigned.has(p.id))continue;const box=pool.find(b=>!used.has(b));if(box){assigned.set(p.id,box);used.add(box);}else issues.push({i,text:`Faltan números de caja en ${clock(slots[i])}.`});}
     // Keep continuity from the MOT assignment, so a temporary exception cannot leak past its end.
