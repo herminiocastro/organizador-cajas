@@ -9,8 +9,8 @@ let project={schema:1,date:localDate(),store:'',people:[],rulesVersion:2,boxes:[
 function localDate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',4500);}
 function persist(){try{localStorage.setItem('organizador-cajas-v1',JSON.stringify(project));}catch{toast('No se ha podido guardar en este dispositivo. Descarga el proyecto para conservarlo.');}}
-function step(n){if(n>1&&!project.people.length){toast('Primero analiza las fotos o abre el ejemplo.');return;}if(n===3){generate();return;}for(let i=1;i<=3;i++){$(`step${i}`).hidden=i!==n;document.querySelector(`[data-step="${i}"]`).classList.toggle('selected',i===n);}if(n===2){renderPeople();$('legacyCalibration').hidden=project.readerVersion>=3;}}
-function displayResult(){for(let i=1;i<=3;i++){$(`step${i}`).hidden=i!==3;document.querySelector(`[data-step="${i}"]`).classList.toggle('selected',i===3);}}
+function step(n){if(n>1&&!project.people.length){toast('Primero analiza las fotos o abre el ejemplo.');return;}if(n===3){generate();return;}for(let i=1;i<=3;i++){$(`step${i}`).hidden=i!==n;document.querySelector(`[data-step="${i}"]`).classList.toggle('selected',i===n);}if(n===2){renderPeople();$('legacyCalibration').hidden=project.readerVersion>=3;}window.scrollTo(0,0);}
+function displayResult(){window.scrollTo(0,0);for(let i=1;i<=3;i++){$(`step${i}`).hidden=i!==3;document.querySelector(`[data-step="${i}"]`).classList.toggle('selected',i===3);}}
 document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>step(Number(b.dataset.step)));
 $('date').value=project.date;$('date').onchange=()=>{project.date=$('date').value;persist();};
 $('help').onclick=()=>$('helpDialog').showModal();$('closeHelp').onclick=()=>$('helpDialog').close();
