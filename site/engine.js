@@ -103,6 +103,7 @@ export function buildSchedule(people,boxes=DEFAULT_BOXES,firstId='',demand=null,
     previous=new Map(assigned);
     for(const a of applicable){
       if(!assigned.has(a.personId)||(a.kind==='swap'&&!assigned.has(a.otherId))){issues.push({i,text:`Cambio sin cajero disponible a las ${clock(slots[i])}.`});continue;}
+      if(a.kind==='relief'){const replacement=people.find(p=>p.id===a.otherId),index=active.findIndex(p=>p.id===a.personId);if(!replacement||replacement.states[i]!=='otra'||index<0){issues.push({i,text:`Relevo sin sustituto disponible a las ${clock(slots[i])}.`});continue;}const box=assigned.get(a.personId);assigned.delete(a.personId);assigned.set(replacement.id,box);active[index]=replacement;continue;}
       if(a.kind==='swap'){const old=assigned.get(a.personId);assigned.set(a.personId,assigned.get(a.otherId));assigned.set(a.otherId,old);continue;}
       const target=a.kind==='first'?boxes[0]:a.box,old=assigned.get(a.personId),occupant=active.find(p=>p.id!==a.personId&&assigned.get(p.id)===target);
       assigned.set(a.personId,target);if(occupant)assigned.set(occupant.id,old);
@@ -123,7 +124,7 @@ export function validateProject(p){
   if(!Array.isArray(p.boxes)||!p.boxes.length||new Set(p.boxes).size!==p.boxes.length||p.boxes.some(b=>!Number.isInteger(b)||b<1||b>99))throw new Error('Revisa los números de caja del archivo.');
   if(p.shift!==undefined&&!Object.hasOwn(SHIFT_PRESETS,p.shift))throw new Error('Turno no válido.');
   if((p.shiftStart!==undefined||p.shiftEnd!==undefined)&&(!Number.isInteger(p.shiftStart)||!Number.isInteger(p.shiftEnd)||p.shiftStart<OPEN||p.shiftEnd>CLOSE||p.shiftEnd<=p.shiftStart||p.shiftStart%STEP||p.shiftEnd%STEP))throw new Error('Horas del turno no válidas.');
-  if(p.adjustments!==undefined&&(!Array.isArray(p.adjustments)||p.adjustments.length>100||p.adjustments.some(a=>!['first','box','swap'].includes(a.kind)||!ids.has(a.personId)||!Number.isInteger(a.start)||!Number.isInteger(a.end)||a.start<OPEN||a.end>CLOSE||a.start>=a.end||a.start%STEP||a.end%STEP||(a.kind==='box'&&(!Number.isInteger(a.box)||a.box<1||a.box>99))||(a.kind==='swap'&&(!ids.has(a.otherId)||a.otherId===a.personId)))))throw new Error('Cambios puntuales no válidos.');
+  if(p.adjustments!==undefined&&(!Array.isArray(p.adjustments)||p.adjustments.length>100||p.adjustments.some(a=>!['first','box','swap','relief'].includes(a.kind)||!ids.has(a.personId)||!Number.isInteger(a.start)||!Number.isInteger(a.end)||a.start<OPEN||a.end>CLOSE||a.start>=a.end||a.start%STEP||a.end%STEP||(a.kind==='box'&&(!Number.isInteger(a.box)||a.box<1||a.box>99))||(['swap','relief'].includes(a.kind)&&(!ids.has(a.otherId)||a.otherId===a.personId)))))throw new Error('Cambios puntuales no válidos.');
   if(p.store!==undefined&&(typeof p.store!=='string'||p.store.length>100))throw new Error('El nombre de tienda no es válido.');
   if(p.date!==undefined&&(typeof p.date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(p.date)))throw new Error('La fecha no es válida.');
   if(p.demand&&(!Array.isArray(p.demand)||p.demand.length!==slots.length||p.demand.some(v=>v!==null&&(!Number.isInteger(v)||v<0||v>40))))throw new Error('La necesidad del MOT no es válida.');return p;

@@ -1,4 +1,4 @@
-# Organizador de cajas · MVP 0.2
+# Organizador de cajas · MVP 0.3
 
 Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web estática, instalable y gratuita. No utiliza una API generativa, cuentas ni servidor de pago. El OCR y el análisis de píxeles se ejecutan localmente.
 
@@ -24,7 +24,7 @@ Organizador básico de cajas para la coordinadora de la tienda de Herminio. Web 
 
 El texto completo y los colores NO equivalen a una interpretación semántica de todos los formatos posibles de MOT. El gris se propone como caja; hay que contrastarlo con la leyenda. Una casilla blanca no basta para reconocer un descanso. No hay evidencia para prometer una transcripción automática fiable todavía. Los nombres y las horas detectados quedan pendientes de revisión. La hoja se marca PROVISIONAL mientras existan personas sin contrastar o incidencias.
 
-El lector detecta filas con etiqueta de empleado A/B y posibles tramos grises; no conoce por sí solo la elegibilidad de todas las secciones. Eliminar cualquier falso positivo y añadir las omisiones es parte de esta prueba. No se añaden apoyos ni reservas a la hoja.
+El lector mide las escalas horarias y las filas a partir de la imagen. Reconoce los nombres sobre filas enderezadas; una A/B mal leída ya no excluye a la persona. No conoce por sí solo la formación de cada trabajador para cubrir una sección. Eliminar cualquier falso positivo y añadir las omisiones es parte de esta prueba. No se añaden apoyos ni reservas a la hoja.
 
 Las cajas adicionales a 10, 19 y 14 son configurables y deben verificarse para la tienda. Las asignaciones escritas a mano en ejemplos anteriores no se consideran reglas permanentes. Esta versión no aprende automáticamente de correcciones entre distintos usuarios.
 
@@ -47,7 +47,7 @@ Repositorio: `herminiocastro/organizador-cajas`. La publicación se realiza medi
 - Tras publicarse, se podrá compartir la URL y añadirla a la pantalla de inicio de iPhone o Android.
 - No subir fotos reales, proyectos JSON con nombres, archivos de pruebas privadas ni horarios personales al repositorio público.
 
-La aplicación incluye todos los archivos del lector y el idioma inglés distribuido con Tesseract. No hace falta descargar un modelo desde un tercero al analizar. El alfabeto español se reconoce con limitaciones (revisar acentos y nombres). Los recursos se guardan en la caché del navegador para poder reutilizarlos. Las mejoras futuras deben cambiar la versión de `site/sw.js` para renovar la caché.
+La aplicación incluye todos los archivos del lector y los idiomas inglés y español distribuidos con Tesseract. No hace falta descargar un modelo desde un tercero al analizar. El lector de producción usa español; siguen siendo necesarias comprobaciones de acentos y nombres. Los recursos se guardan en la caché del navegador para poder reutilizarlos. Las mejoras futuras deben cambiar la versión de `site/sw.js` para renovar la caché.
 
 ## Privacidad
 
@@ -62,7 +62,7 @@ No hay analítica ni peticiones a una API de lectura. Fotos solo en memoria de l
 
 ## Dependencias y licencias
 
-Tesseract.js 7.0.0, tesseract.js-core 7.0.0 y datos `eng.traineddata` de la instalación de Tesseract. Avisos de licencia en `site/vendor/*LICENSE*` y `eng-traineddata-COPYRIGHT.txt`. El programa OCR usa aprendizaje automático internamente, pero no utiliza un servicio de IA generativa ni cobra por lectura.
+Tesseract.js 7.0.0, tesseract.js-core 7.0.0 y datos `eng.traineddata` / `spa.traineddata` de la instalación de Tesseract. Avisos de licencia en `site/vendor/*LICENSE*` y `eng-traineddata-COPYRIGHT.txt`. El programa OCR usa aprendizaje automático internamente, pero no utiliza un servicio de IA generativa ni cobra por lectura.
 
 ## Primera prueba recomendada
 
@@ -85,3 +85,15 @@ El turno de tarde predeterminado comienza a las 14:00, como en la referencia apo
 El paso 2 muestra un resumen; la edición avanzada queda cerrada bajo «Corregir un dato leído». Una comprobación del resumen confirma solo ese intervalo de horas. Cambiar las horas no confirma automáticamente otro turno. Los cambios puntuales del paso 3 no se interpretan como lenguaje libre: son controles explícitos que validan la disponibilidad. Una excepción caduca al terminar su intervalo.
 
 La mejora de interfaz y formato no resuelve la precisión del OCR: la prueba sobre la foto delantera del 16/10 todavía omite filas y desplaza algunos tramos. No se considera validada una transcripción automática de extremo a extremo.
+
+## Lector geométrico · 17/10/2026
+
+El lector anterior dependía de coordenadas proporcionales fijas y de que el OCR reconociese la etiqueta A/B. El recorte de nombres incluía círculos y pliegues; algunas filas se descartaban por ese ruido. El gris de una letra o una sombra podía confundirse con un bloque de caja. El resultado podía omitir el bloque principal casi completo.
+
+`site/mot-reader.js` sustituye esa ruta de producción: detecta las escalas multicolores, sigue su curvatura, localiza las filas y los círculos de horas, alinea sus nombres, mide las marcas de cada hora, comprueba el relleno de las casillas y reconoce las marcas AM sobre recortes rectificados. Se usa el modelo español gratuito de tessdata_fast 4.1.0 con SHA-256 verificado. La lectura en Node y en navegador comparte el mismo módulo. Si no se sitúa una escala o sus filas, se informa del fallo en lugar de generar una lista mínima como si fuera válida.
+
+Una lectura guardada con la versión anterior no se transforma ni se valida automáticamente: se pide volver a analizar las dos fotos. El PDF y su formato aprobado no se modifican.
+
+Verificación: 21 pruebas automáticas de motor, PDF y geometría; comparación privada de ambas caras del MOT de referencia y reconocimiento de geometría sobre otras tomas. En el ejemplo de tarde, el recuento recuperado coincide con 13 de los 15 tramos de la hoja manuscrita; siguen existiendo errores de escritura en algunos nombres y diferencias de personas/asignaciones. Coincidir en recuento NO valida toda la organización. No se han codificado nombres ni horarios del ejemplo en el producto ni en las pruebas públicas.
+
+Los relevos que no estén pintados en el MOT no se pueden deducir automáticamente: el cambio puntual «Sustituir a quien sale a cubrir una sección» mantiene el número y la caja, retira al saliente sin marcarlo de descanso y exige que el sustituto esté en otra tarea, nunca de descanso ni fuera de turno. Al finalizar el intervalo, se recupera la asignación del MOT.

@@ -69,3 +69,10 @@ test('imports validate shifts and exceptions; older projects remain readable',()
  assert.throws(()=>validateProject({...p,adjustments:[{kind:'box',personId:'missing',box:10,start:540,end:600}]}));
  assert.doesNotThrow(()=>validateProject({...p,shift:'afternoon',shiftStart:840,shiftEnd:1290,adjustments:[]}));
 });
+
+test('a section relief replaces one cashier, inherits the box, and expires without adding support',()=>{
+ const a=person('A',[0,1,2]),b=person('B',[0,1,2]),cover=person('C');cover.states[1]='otra';
+ const r=buildSchedule([a,b,cover],undefined,'A',null,{start:540,end:630,adjustments:[{kind:'relief',personId:'A',otherId:'C',start:570,end:600}]});
+ assert.deepEqual(r.blocks[0].members.map(p=>p.id),['A','B']);assert.deepEqual(r.blocks[1].members.map(p=>p.id),['C','B']);assert.equal(r.blocks[1].members[0].box,10);assert.equal(r.blocks[1].members.length,2);assert.equal(r.blocks[1].breaks.length,0);assert.deepEqual(r.blocks[2].members.map(p=>p.id),['A','B']);
+ cover.states[1]='descanso';const invalid=buildSchedule([a,b,cover],undefined,'A',null,{start:570,end:600,adjustments:[{kind:'relief',personId:'A',otherId:'C',start:570,end:600}]});assert.ok(invalid.issues.some(i=>i.text.includes('Relevo')));assert.equal(invalid.blocks[0].members[0].id,'A');
+});

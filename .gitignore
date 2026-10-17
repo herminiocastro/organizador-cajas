@@ -14,3 +14,8 @@ site/vendor/worker.min.js
 site/vendor/eng.traineddata
 
 site/vendor/pdf-lib.min.js
+
+site/vendor/spa.traineddata
+site/vendor/.*
+
+spa.traineddata

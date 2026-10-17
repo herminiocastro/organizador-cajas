@@ -11,15 +11,16 @@ for(const f of ['tesseract.min.js','worker.min.js','tesseract.min.js.LICENSE.txt
 for(const f of ['tesseract-core-lstm.wasm.js','tesseract-core-lstm.wasm','tesseract-core-simd-lstm.wasm.js','tesseract-core-simd-lstm.wasm'])await fs.copyFile(path.join(core,f),path.join(dest,f));
 await fs.copyFile(path.join(tess,'LICENSE.md'),path.join(dest,'tesseract.js-LICENSE.txt'));
 await fs.copyFile(path.join(core,'LICENSE'),path.join(dest,'tesseract.js-core-LICENSE.txt'));
-const file=path.join(dest,'eng.traineddata');
-const expected='7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2';
+for(const [lang,expected] of [['eng','7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2'],['spa','6f2e04d02774a18f01bed44b1111f2cd7f3ba7ac9dc4373cd3f898a40ea6b464']]){
+const file=path.join(dest,lang+'.traineddata');
 let bytes;try{bytes=await fs.readFile(file);}catch{}
 if(!bytes||createHash('sha256').update(bytes).digest('hex')!==expected){
- const response=await fetch('https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/4.1.0/eng.traineddata',{signal:AbortSignal.timeout(60000)});
+ const response=await fetch(`https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/4.1.0/${lang}.traineddata`,{signal:AbortSignal.timeout(60000)});
  if(!response.ok)throw new Error(`No se ha podido descargar el idioma OCR: ${response.status}`);
  bytes=Buffer.from(await response.arrayBuffer());
  if(createHash('sha256').update(bytes).digest('hex')!==expected)throw new Error('La comprobación del idioma OCR ha fallado.');
  await fs.writeFile(file,bytes);
+}
 }
 console.log('Lector OCR y datos de idioma preparados y verificados.');
 
